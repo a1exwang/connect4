@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommand>C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Compete\Release\Compete.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
+    <LocalDebuggerCommandArguments>"C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\TestCases\2.dll" "C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Connect4\Debug\Strategy.dll" a.txt 100</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AI_UI|Win32'">
+    <LocalDebuggerCommand>C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Connect4\UI\bin\AI_UI\UI.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
+    <LocalDebuggerCommandArguments>
+    </LocalDebuggerCommandArguments>
+  </PropertyGroup>
+</Project>
