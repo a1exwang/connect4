@@ -29,18 +29,26 @@ void Node::ai(int &out_line, int &out_column) {
 	int selected_line = -1, selected_col = -1;
 	srand(static_cast<unsigned int>(time(nullptr)));
 
-	for (auto j = 0; j < 40000; ++j) {
+#ifdef _DEBUG
+	auto t1 = time(nullptr);
+#endif
+
+	for (auto j = 0; j < MONTE_CARLO_TIMES; ++j) {
 		Node::root->monteCarloSimOnce();
 	}
+#ifdef _DEBUG
 	cout << "round: " << (Node::root->depth+1)/2 << ", times: " << Node::root->times << endl;
+#endif
 
 	auto max = -1000.0;
 
 	for (auto i = 0; i < Node::root->childrenCount; ++i) {
 		auto child = Node::root->children[i];
 
+#ifdef _DEBUG
 		cout << "\tcolumn: " << child->getColumn() << ", score: "
 			<< child->score << ", winrate: " << child->winRate << endl;
+#endif
 
 		if (child->winRate > max) {
 			max = child->winRate;
@@ -54,6 +62,10 @@ void Node::ai(int &out_line, int &out_column) {
 
 	out_line = selected_line;
 	out_column = selected_col;
+#ifdef _DEBUG
+	auto t2 = time(nullptr);
+	cout << "time: " << t2 - t1 << endl;
+#endif
 }
 
 int Node::randomTop() const {
@@ -274,6 +286,16 @@ void Node::playerMove(int line, int column, Player player) {
 	delete oldRoot;
 }
 
+void Node::resetAll() {
+	if (Node::root)
+		delete Node::root;
+	Node::m = -1;
+	Node::n = -1;
+	Node::noLine = -1;
+	Node::noColumn = -1;
+	Node::root = nullptr;
+}
+
 Node::Node() :
 	parent(nullptr), player(None), line(-1), col(-1), score(-1), 
 	childrenCount(0), depth(1), patternMatched(false) {
@@ -318,10 +340,14 @@ Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 	}
 	node->line = node->top[thisCol] + 1;
 
-	assert(node->line >= 0);
+	if (node->line < 0) {
+		assert(false);
+	}
 	node->col = thisCol;
 	cloneMatrix(*node);
-	assert(node->board[node->line][node->col] == Player::None);
+	if(node->board[node->line][node->col] != Player::None) {
+		assert(node->board[node->line][node->col] == Player::None);
+	}
 	node->board[node->line][node->col] = node->player;
 	node->childrenCount = 0;
 	node->score = DEFAULT_SCORE;

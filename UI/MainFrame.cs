@@ -43,11 +43,11 @@ namespace UI
 
             //生成一个随机的不可落子点,存放在Data.noLine 和 Data.noY里面
             Random rand = new Random();
-            //Data.noX = rand.Next(0, M);
-            //Data.noY = rand.Next(0, N);
+            Data.noX = rand.Next(0, M);
+            Data.noY = rand.Next(0, N);
 
-            Data.noX = M - 2;
-            Data.noY = 2;
+            //Data.noX = M - 2;
+            //Data.noY = 2;
 
             try
             {

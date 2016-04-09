@@ -30,7 +30,7 @@ using namespace std;
 */
 
 static bool firstTime = true;
-extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const int* top, const int* _board, 
+extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const int* oldTop, const int* _board, 
 	const int lastX, const int lastY, const int noX, const int noY){
 	/*
 		不要更改这段代码
@@ -44,32 +44,36 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 		}
 	}
 
+	if (lastX == -1) {
+		firstTime = true;
+		Node::resetAll();
+	}
+
 	// my ai starts here
 	if (firstTime) {
 		Node::m = M;
 		Node::n = N;
 		Node::noLine = noX;
 		Node::noColumn = noY;
-		
 	}
 
-	int *_top = new int[Node::n];
-	for (int i = 0; i < Node::n; ++i) {
-		_top[i] = top[i] - 1;
+	int top[MAX_COLUMNS];
+	for (auto i = 0; i < Node::n; ++i) {
+		top[i] = oldTop[i] - 1;
 	}
 
 	// my first
 	if (lastX == -1) {
 		y = top[Node::n / 2] >= 0 ? Node::n / 2 : Node::n / 2 + 1;
-		x = _top[y];
+		x = top[y];
 		firstTime = false;
-		Node::initRoot(false, x, y, _top);
-		clearArray(M, N, board);
+		Node::initRoot(false, x, y, top);
+		clearArray(Node::m, Node::n, board);
 		return new Point(x, y);
 	}
 	// opponent first
 	else if (firstTime) {
-		Node::initRoot(true, lastX, lastY, _top);
+		Node::initRoot(true, lastX, lastY, top);
 	}
 	// not the first time
 	else {
@@ -77,13 +81,15 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 	}
 	firstTime = false;
 	Node::ai(x, y);
-	if (_top[y] != x) throw 1;
+	if (x < 0 || x >= Node::m || y < 0 || y >= Node::n || board[x][y] != 0 || top[y] != x) {
+		assert(false); // fucked
+	}
 	// my ai ends
 
 	/*
 		不要更改这段代码
 	*/
-	clearArray(M, N, board);
+	clearArray(Node::m, Node::n, board);
 	return new Point(x, y);
 }
 

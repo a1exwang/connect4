@@ -10,14 +10,14 @@ enum Player {
 	Tie = 3,
 	No = 4
 };
-
+constexpr int MONTE_CARLO_TIMES = 60000;
 constexpr int DEFAULT_SCORE = 0;
 constexpr int SCORE_SELF_WIN = 1;
 constexpr int SCORE_TIE = 0;
 constexpr int SCORE_OTHER_WIN = -1;
 
-constexpr int MAX_LINES = 15;
-constexpr int MAX_COLUMNS = 15;
+constexpr int MAX_LINES = 13;
+constexpr int MAX_COLUMNS = 13;
 
 struct Node {
 public:
@@ -26,6 +26,7 @@ public:
 	static void ai(int &, int &);
 	static int m, n, noLine, noColumn;
 	static Node *root;
+	static void resetAll();
 public:
 	Node();
 	~Node();
