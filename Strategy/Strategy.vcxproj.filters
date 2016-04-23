@@ -27,6 +27,9 @@
     <ClCompile Include="PatternMatcher.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="TreeAllocator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Judge.h">
@@ -38,10 +41,13 @@
     <ClInclude Include="Strategy.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ai.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="PatternMatcher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeAllocator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ai.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

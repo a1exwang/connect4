@@ -356,6 +356,7 @@
     <ClCompile Include="Judge.cpp" />
     <ClCompile Include="PatternMatcher.cpp" />
     <ClCompile Include="Strategy.cpp" />
+    <ClCompile Include="TreeAllocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ai.h" />
@@ -363,6 +364,7 @@
     <ClInclude Include="PatternMatcher.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Strategy.h" />
+    <ClInclude Include="TreeAllocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

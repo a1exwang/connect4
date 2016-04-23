@@ -19,9 +19,7 @@ Node *Node::root = nullptr;
 
 void Node::cloneMatrix(Node &node) const {
 	for (auto i = 0; i < m; ++i) {
-		for (auto j = 0; j < n; ++j) {
-			node.board[i][j] = board[i][j];
-		}
+		memcpy(node.board[i], board[i], n * sizeof(Player));
 	}
 }
 
@@ -219,7 +217,7 @@ Player Node::getWinner() const {
 }
 
 void Node::initRoot(bool opponentFirst, int thisLine, int col, const int *top) {
-	auto node = new Node();
+	auto node = createNode();
 	node->col = col;
 	node->player = opponentFirst ? Player::Other : Player::Self;
 	node->parent = nullptr;
@@ -280,20 +278,28 @@ void Node::playerMove(int line, int column, Player player) {
 
 	for (int i = 0; i < oldRoot->childrenCount; ++i) {
 		if (oldRoot->children[i] != nullptr)
-			delete oldRoot->children[i];
+			destroy(oldRoot->children[i]);
 	}
 	oldRoot->childrenCount = 0;
-	delete oldRoot;
+	destroy(oldRoot);
 }
 
 void Node::resetAll() {
 	if (Node::root)
-		delete Node::root;
+		destroy(Node::root);
 	Node::m = -1;
 	Node::n = -1;
 	Node::noLine = -1;
 	Node::noColumn = -1;
 	Node::root = nullptr;
+}
+#include "TreeAllocator.h"
+Node *Node::createNode() {
+	return TreeAllocator::get()->allocateNode();
+}
+
+void Node::destroy(const Node *node) {
+	TreeAllocator::get()->recycleNode(node);
 }
 
 Node::Node() :
@@ -302,13 +308,13 @@ Node::Node() :
 }
 
 Node::~Node() {
-	for (int i = 0; i < childrenCount; ++i) {
+	/*for (auto i = 0; i < childrenCount; ++i) {
 		delete children[i];
-	}
+	}*/
 }
 
 Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
-	for (int i = 0; i < childrenCount; ++i) {
+	for (auto i = 0; i < childrenCount; ++i) {
 		if (children[i]->col == thisCol) {
 			if (addChild) {
 				return children[i];
@@ -319,7 +325,8 @@ Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 			}
 		}
 	}
-	auto node = new Node(*this);
+	auto node = createNode();
+	*node = *this;
 	node->depth = depth + 1;
 	node->player = otherPlayer();
 	node->line = -1;
@@ -335,7 +342,7 @@ Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 		node->top[thisCol]--;
 	}
 	else {
-		delete node;
+		destroy(node);
 		return nullptr;
 	}
 	node->line = node->top[thisCol] + 1;
@@ -371,23 +378,23 @@ void Node::updateScoreByChildren() {
 		times += children[i]->times;
 	}
 	//if ()
-	winRate = (double)score / times;
+	winRate = static_cast<double>(score / times);
 }
 
 void Node::makeWinnerNode(Player winner) {
 	if (winner == Player::Self) {
-		this->score = SCORE_SELF_WIN;// *depth;
+		this->score += SCORE_SELF_WIN;// *depth;
 		this->winRate = 1;
 	}
 	else if (winner == Player::Other) {
-		this->score = SCORE_OTHER_WIN;// *depth;
+		this->score += SCORE_OTHER_WIN;// *depth;
 		this->winRate = -1;
 	}
 	else {
-		this->score = SCORE_TIE;
+		this->score += SCORE_TIE;
 		this->winRate = 0;
 	}
-	this->times = 1;
+	this->times += 1;
 }
 
 Player Node::otherPlayer() const {
@@ -413,25 +420,26 @@ Node* Node::findOrCreateByPattern() {
 }
 
 bool Node::monteCarloSimOnce() {
+
 	auto winner = getWinner();
 
 	if (winner == Player::None) {
 		// randomly select a top
 		//vector<int> columnsTried;
 		// TODO: should back trace
-		for (int i = 0; i < 10; ++i) {
+		//for (int i = 0; i < 10; ++i) {
 			auto selectedColumn = monteCarloSelectNextColumn();
 			auto newNode = findOrCreateByColumn(selectedColumn);
 			if (newNode->monteCarloSimOnce()) {
 				updateScoreByChildren();
-				break;
+				//break;
 			}
-		};
+		//}
 	}
 	else {
-		if (times > 0) {
+		/*if (times > 0) {
 			return false;
-		}
+		}*/
 		makeWinnerNode(winner);
 	}
 	return true;

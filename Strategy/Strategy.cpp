@@ -4,6 +4,7 @@
 #include "ai.h"
 #include <memory>
 #include <cassert>
+#include "windows.h"
 
 using namespace std;
 
@@ -112,6 +113,25 @@ void clearArray(int M, int N, int** board){
 	}
 	delete[] board;
 }
+
+#include "TreeAllocator.h"
+
+extern "C"  __declspec(dllexport) BOOL WINAPI DllMain(
+	_In_ HINSTANCE hinstDLL,
+	_In_ DWORD     fdwReason,
+	_In_ LPVOID    lpvReserved
+) {
+	switch(fdwReason) {
+	case DLL_PROCESS_DETACH:
+		TreeAllocator::destroy();
+		break;
+	default:
+		break;
+	}
+	
+	return TRUE;
+}
+
 
 
 /*

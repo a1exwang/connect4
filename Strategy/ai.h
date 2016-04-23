@@ -10,7 +10,7 @@ enum Player {
 	Tie = 3,
 	No = 4
 };
-constexpr int MONTE_CARLO_TIMES = 60000;
+constexpr int MONTE_CARLO_TIMES = 10000;
 constexpr int DEFAULT_SCORE = 0;
 constexpr int SCORE_SELF_WIN = 1;
 constexpr int SCORE_TIE = 0;
@@ -28,7 +28,8 @@ public:
 	static Node *root;
 	static void resetAll();
 public:
-	Node();
+	static Node *createNode();
+	static void destroy(const Node*);
 	~Node();
 	Node *findOrCreateByColumn(int colunm, bool addChild = true);
 	//Player setPos(int line, int col, Player player);
@@ -42,7 +43,11 @@ public:
 	}
 	int getLine() const { return line; }
 	int getColumn() const { return col; }
+	int getChildrenCount() const { return childrenCount; }
+	Node *getChild(int i) const { return children[i]; }
 private:
+	friend class TreeAllocator;
+	Node();
 	Node *findOrCreateByPattern();
 	bool monteCarloSimOnce();
 	int monteCarloSelectNextColumn() const;
