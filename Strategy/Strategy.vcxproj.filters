@@ -24,9 +24,6 @@
     <ClCompile Include="ai.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PatternMatcher.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="TreeAllocator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

@@ -36,7 +36,7 @@ public:
 		int line;
 		int column;
 		//PositionProperty property;
-		MatcherPoint() :player(Player::None), line(-1), column(-1) { }
+		MatcherPoint() :player(None), line(-1), column(-1) { }
 	};
 	struct MatchData {
 		MatcherPoint points[PATTERN_MAX_LINES][PATTERN_MAX_COLUMNS];

@@ -1,12 +1,9 @@
 #include "ai.h"
-#include "Judge.h"
-#include <memory>
-#include <cstdlib>
 #include <ctime>
-#include <vector>
 #include <cassert>
 #include "PatternMatcher.h"
 #include <iostream>
+#include <windows.h>
 #define TRUE_RANDOMN
 
 using namespace std;
@@ -18,17 +15,17 @@ int Node::noColumn = -1;
 Node *Node::root = nullptr;
 
 void Node::cloneMatrix(Node &node) const {
-	for (auto i = 0; i < m; ++i) {
-		memcpy(node.board[i], board[i], n * sizeof(Player));
-	}
+	memcpy(node.board, board, sizeof(board));
 }
 
 void Node::ai(int &out_line, int &out_column) {
 	int selected_line = -1, selected_col = -1;
 	srand(static_cast<unsigned int>(time(nullptr)));
 
+
 #ifdef _DEBUG
-	auto t1 = time(nullptr);
+	auto t1 = GetTickCount();
+	cout << "sizeof(Node) " << sizeof(Node) << endl;
 #endif
 
 	for (auto j = 0; j < MONTE_CARLO_TIMES; ++j) {
@@ -41,27 +38,28 @@ void Node::ai(int &out_line, int &out_column) {
 	auto max = -1000.0;
 
 	for (auto i = 0; i < Node::root->childrenCount; ++i) {
+		//auto child = Node::root->getChild(i);
 		auto child = Node::root->children[i];
 
 #ifdef _DEBUG
 		cout << "\tcolumn: " << child->getColumn() << ", score: "
-			<< child->score << ", winrate: " << child->winRate << endl;
+			<< child->score << ", winrate: " << child->getWinRate() << endl;
 #endif
 
-		if (child->winRate > max) {
-			max = child->winRate;
+		if (child->getWinRate() > max) {
+			max = child->getWinRate();
 			selected_line = child->line;
 			selected_col = child->col;
 		}
 	}
 
 	// select
-	playerMove(selected_line, selected_col, Player::Self);
+	playerMove(selected_line, selected_col, Self);
 
 	out_line = selected_line;
 	out_column = selected_col;
 #ifdef _DEBUG
-	auto t2 = time(nullptr);
+	auto t2 = GetTickCount();
 	cout << "time: " << t2 - t1 << endl;
 #endif
 }
@@ -85,6 +83,7 @@ Node* Node::randomChild() const {
 	if (childrenCount <= 0)
 		return nullptr;
 #ifdef TRUE_RANDOMN
+	//return getChild(rand() % childrenCount);
 	return children[rand() % childrenCount];
 #else
 	return children[0];
@@ -203,37 +202,35 @@ Player Node::getWinner() const {
 	}
 
 	if (tie)
-		return Player::Tie;
+		return Tie;
 
 	if (player == Self) {
 		if (selfWin(line, col))
-			return Player::Self;
+			return Self;
 	}
 	else {
 		if (otherWin(line, col))
-			return Player::Other;
+			return Other;
 	}
-	return Player::None;
+	return None;
 }
 
 void Node::initRoot(bool opponentFirst, int thisLine, int col, const int *top) {
 	auto node = createNode();
 	node->col = col;
-	node->player = opponentFirst ? Player::Other : Player::Self;
-	node->parent = nullptr;
+	node->player = opponentFirst ? Other : Self;
+	//node->parent = nullptr;
 	for (auto i = 0; i < Node::m; ++i) {
 		for (auto j = 0; j < Node::n; ++j) {
-			node->board[i][j] = Player::None;
+			node->board[i][j] = None;
 		}
 	}
-	node->board[Node::noLine][Node::noColumn] = Player::No;
+	node->board[Node::noLine][Node::noColumn] = No;
 	for (int i = 0; i < Node::n; ++i) {
 		node->top[i] = top[i];
 	}
 	node->childrenCount = 0;
 	node->score = 0;
-	node->patternMatched = false;
-	node->winRate = 0;
 	node->times = 0;
 
 	if (opponentFirst) {
@@ -257,14 +254,14 @@ void Node::playerMove(int line, int column, Player player) {
 
 	Node *newRoot = nullptr;
 	auto oldRoot = Node::root;
-	for (auto i = 0; i < root->childrenCount; ++i) {
-		if (root->children[i]->col == column) {
-			newRoot = root->children[i];
-			root->children[i] = nullptr;
+	for (auto i = 0; i < oldRoot->childrenCount; ++i) {
+		//if (oldRoot->getChild(i)->col == column) {
+		//newRoot = oldRoot->getChild(i);
+		//oldRoot->setChild(i, nullptr);
+		if (oldRoot->children[i]->col == column) {
+			newRoot = oldRoot->children[i];
+			oldRoot->children[i] = nullptr;
 			break;
-		}
-		else {
-			//delete root->children[i];
 		}
 	}
 
@@ -276,11 +273,6 @@ void Node::playerMove(int line, int column, Player player) {
 		root = oldRoot->findOrCreateByColumn(column, false);
 	}
 
-	for (int i = 0; i < oldRoot->childrenCount; ++i) {
-		if (oldRoot->children[i] != nullptr)
-			destroy(oldRoot->children[i]);
-	}
-	oldRoot->childrenCount = 0;
 	destroy(oldRoot);
 }
 
@@ -295,16 +287,33 @@ void Node::resetAll() {
 }
 #include "TreeAllocator.h"
 Node *Node::createNode() {
-	return TreeAllocator::get()->allocateNode();
+	return TreeAllocator::get()->allocateNode()->init();
 }
 
 void Node::destroy(const Node *node) {
 	TreeAllocator::get()->recycleNode(node);
 }
 
+Node* Node::init() {
+	player = None;
+	line = -1;
+	col = -1;
+	score = 0;
+	times = 0;
+	//winRate = 0;
+	childrenCount = 0;
+#ifdef _DEBUG
+	depth = 1;
+#endif
+	return this;
+}
+
 Node::Node() :
-	parent(nullptr), player(None), line(-1), col(-1), score(-1), 
-	childrenCount(0), depth(1), patternMatched(false) {
+	/*parent(nullptr),*/ player(None), line(-1), col(-1), score(-1), 
+	childrenCount(0)/*, patternMatched(false) */{
+#ifdef _DEBUG
+	depth = 1;
+#endif;
 }
 
 Node::~Node() {
@@ -315,8 +324,10 @@ Node::~Node() {
 
 Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 	for (auto i = 0; i < childrenCount; ++i) {
+		//if (getChild(i)->col == thisCol) {
 		if (children[i]->col == thisCol) {
 			if (addChild) {
+				//return getChild(i);
 				return children[i];
 			}
 			else {
@@ -327,7 +338,9 @@ Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 	}
 	auto node = createNode();
 	*node = *this;
+#ifdef _DEBUG
 	node->depth = depth + 1;
+#endif
 	node->player = otherPlayer();
 	node->line = -1;
 	for (auto i = 0; i < Node::n; ++i) {
@@ -352,20 +365,21 @@ Node* Node::findOrCreateByColumn(int thisCol, bool addChild) {
 	}
 	node->col = thisCol;
 	cloneMatrix(*node);
-	if(node->board[node->line][node->col] != Player::None) {
-		assert(node->board[node->line][node->col] == Player::None);
+	if(node->board[node->line][node->col] != None) {
+		assert(node->board[node->line][node->col] == None);
 	}
 	node->board[node->line][node->col] = node->player;
 	node->childrenCount = 0;
 	node->score = DEFAULT_SCORE;
-	node->patternMatched = false;
+	//node->patternMatched = false;
 	node->times = 0;
-	node->winRate = 0;
+	//node->winRate = 0;
 
 	if (addChild) {
+		//setChild(childrenCount, node);
 		children[childrenCount] = node;
 		childrenCount++;
-		node->parent = this;
+		//node->parent = this;
 	}
 	return node;
 }
@@ -374,25 +388,27 @@ void Node::updateScoreByChildren() {
 	score = 0;
 	times = 0;
 	for (int i = 0; i < childrenCount; ++i) {
+		//score += getChild(i)->score;
+		//times += getChild(i)->times;
 		score += children[i]->score;
 		times += children[i]->times;
 	}
 	//if ()
-	winRate = static_cast<double>(score / times);
+	//winRate = static_cast<double>(score) / times;
 }
 
 void Node::makeWinnerNode(Player winner) {
-	if (winner == Player::Self) {
+	if (winner == Self) {
 		this->score += SCORE_SELF_WIN;// *depth;
-		this->winRate = 1;
+		//this->winRate = 1;
 	}
-	else if (winner == Player::Other) {
+	else if (winner == Other) {
 		this->score += SCORE_OTHER_WIN;// *depth;
-		this->winRate = -1;
+		//this->winRate = -1;
 	}
 	else {
 		this->score += SCORE_TIE;
-		this->winRate = 0;
+		//this->winRate = 0;
 	}
 	this->times += 1;
 }
@@ -407,23 +423,38 @@ Player Node::otherPlayer() const {
 	}
 }
 
-Node* Node::findOrCreateByPattern() {
+void Node::becomeChild(int column) {
 	
-	if (childrenCount > 0)
-		return nullptr;
-	int selectedLine, selectedCol;
-	auto m = Matcher::matchAllAndDoAction(*this, selectedLine, selectedCol);
-	if (m) {
-		return findOrCreateByColumn(selectedCol);
-	}
-	return nullptr;
 }
+
+
+int Node::monteCarloSimOnceDestroy() {
+	auto winner = getWinner();
+
+	if (winner == None) {
+		auto selectedColumn = monteCarloSelectNextColumn();
+		becomeChild(selectedColumn);
+		return monteCarloSimOnceDestroy();
+	}
+	else {
+		if (winner == Self) {
+			return SCORE_SELF_WIN;
+		}
+		else if (winner == Other) {
+			return SCORE_OTHER_WIN;						   
+		}
+		else {
+			return SCORE_TIE;
+		}
+	}
+}
+
 
 bool Node::monteCarloSimOnce() {
 
 	auto winner = getWinner();
 
-	if (winner == Player::None) {
+	if (winner == None) {
 		// randomly select a top
 		//vector<int> columnsTried;
 		// TODO: should back trace
@@ -447,28 +478,4 @@ bool Node::monteCarloSimOnce() {
 
 int Node::monteCarloSelectNextColumn() const {
 	return randomTop();
-	//return confidenceSelectNextColomn();
-}
-
-#include <random>
-int Node::confidenceSelectNextColomn() const {
-	auto f = winRate;
-	std::random_device rd;
-	std::mt19937 gen(rd());
-
-	// [0, 2]
-	double *probArray = new double[Node::n];
-	for (int _column = 0; _column < Node::n; ++_column) {
-		probArray[_column] = 0;
-	}
-	for (int child = 0; child < childrenCount; ++child) {
-		probArray[children[child]->col] = children[child]->winRate + 1;
-	}
-	for (int _column = 0; _column < Node::n; ++_column) {
-		if (top[_column] >= 0 && probArray[_column] == 0)
-			probArray[_column] = 1;
-	}
-
-	std::discrete_distribution<> d(probArray, probArray + Node::n);
-	return d(gen);
 }

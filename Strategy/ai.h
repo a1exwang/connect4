@@ -1,16 +1,18 @@
 #pragma once
+
 #include <vector>
 
 typedef int** Matrix;
 
-enum Player {
+typedef char Player;
+enum {
 	None = 0,
 	Other = 1,
 	Self = 2,
 	Tie = 3,
 	No = 4
 };
-constexpr int MONTE_CARLO_TIMES = 10000;
+constexpr int MONTE_CARLO_TIMES = 120000;
 constexpr int DEFAULT_SCORE = 0;
 constexpr int SCORE_SELF_WIN = 1;
 constexpr int SCORE_TIE = 0;
@@ -19,6 +21,7 @@ constexpr int SCORE_OTHER_WIN = -1;
 constexpr int MAX_LINES = 13;
 constexpr int MAX_COLUMNS = 13;
 
+#pragma pack(push, 4)
 struct Node {
 public:
 	static void initRoot(bool opponentFirst, int, int col, const int *top);
@@ -41,15 +44,21 @@ public:
 	Player get(int line, int column) const {
 		return board[line][column];
 	}
+	void set(int line, int column, Player p) {
+		board[line][column] = p;
+	}
 	int getLine() const { return line; }
 	int getColumn() const { return col; }
 	int getChildrenCount() const { return childrenCount; }
-	Node *getChild(int i) const { return children[i]; }
+	//Node *getChild(int i) const;
+	//void setChild(int i, Node *child);
 private:
+	Node *init();
 	friend class TreeAllocator;
 	Node();
 	Node *findOrCreateByPattern();
 	bool monteCarloSimOnce();
+	int monteCarloSimOnceDestroy();
 	int monteCarloSelectNextColumn() const;
 	int confidenceSelectNextColomn() const;
 	int randomTop() const;
@@ -58,22 +67,32 @@ private:
 	bool otherWin(int, int) const;
 	bool selfWin(int, int) const;
 	void Node::cloneMatrix(Node &node) const;
+	double getWinRate() const {
+		return static_cast<double>(score) / times;
+	}
+
+	void becomeChild(int column);
 public:
 	Player board[MAX_LINES][MAX_COLUMNS];
-	int top[MAX_COLUMNS];
+	char top[MAX_COLUMNS];
 
 	Player player;
-	int line, col;
-	int64_t score;
-	int depth;
+	int8_t line, col;
+	int32_t score;
 	int times;
-	double winRate;
+#ifdef _DEBUG
+	int depth;
+#endif
 
-	Node* children[MAX_COLUMNS];
-	int childrenCount;
-	Node *parent;
+	//double winRate;
 
-	bool patternMatched;
+	//uint32_t children[MAX_COLUMNS];
+	Node *children[MAX_COLUMNS];
+	int8_t childrenCount;
+	//Node *parent;
+
+	//bool patternMatched;
 
 	friend class __Initializer;
 };
+#pragma pack(pop)

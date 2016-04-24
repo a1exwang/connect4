@@ -330,6 +330,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -354,7 +355,6 @@
   <ItemGroup>
     <ClCompile Include="ai.cpp" />
     <ClCompile Include="Judge.cpp" />
-    <ClCompile Include="PatternMatcher.cpp" />
     <ClCompile Include="Strategy.cpp" />
     <ClCompile Include="TreeAllocator.cpp" />
   </ItemGroup>

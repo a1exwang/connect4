@@ -151,7 +151,7 @@ std::shared_ptr<Matcher::MatchData> Matcher::matchOnce(const Node& node) {
 		return matchAll(node);
 	}
 }
-
+/*
 std::shared_ptr<Matcher::MatchData> Matcher::matchWithAnchor(const Node& node, int myAnchorLine, int myAnchorColumn) {
 	auto deltaLine = node.getLine() - myAnchorLine;
 	auto deltaColumn = node.getColumn() - myAnchorColumn;
@@ -159,7 +159,7 @@ std::shared_ptr<Matcher::MatchData> Matcher::matchWithAnchor(const Node& node, i
 	auto ret = std::make_shared<MatchData>();
 
 	auto matchCount = 0;
-	auto eitherPlayer = Player::None;
+	auto eitherPlayer = None;
 	for (auto i = 0; i < PATTERN_MAX_LINES; ++i) {
 		for (auto j = 0; j < PATTERN_MAX_COLUMNS; ++j) {
 			auto boardLine = deltaLine + i;
@@ -247,3 +247,4 @@ std::shared_ptr<Matcher::MatchData> Matcher::matchWithAnchor(const Node& node, i
 	else
 		return nullptr;
 }
+*/
