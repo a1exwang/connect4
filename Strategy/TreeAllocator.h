@@ -3,7 +3,7 @@
 
 constexpr uint32_t INVALID_NODE_INDEX = 0xFFFFFFFF;
 
-constexpr int TREE_ALLOCATOR_SIZE = 530 * 10000;
+constexpr int TREE_ALLOCATOR_SIZE = 1 * 10000;
 
 class TreeAllocator {
 public:
@@ -25,7 +25,6 @@ public:
 	static void destroy();
 protected:
 	static TreeAllocator theInstance;
-	void expandReusableNode(Node *node);
 	void reset();
 private:
 	Node* reusableNodes[TREE_ALLOCATOR_SIZE];

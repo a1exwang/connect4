@@ -47,7 +47,7 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 
 	if (lastX == -1) {
 		firstTime = true;
-		Node::resetAll();
+		//Node::resetAll();
 	}
 
 	// my ai starts here
@@ -68,20 +68,20 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 		y = top[Node::n / 2] >= 0 ? Node::n / 2 : Node::n / 2 + 1;
 		x = top[y];
 		firstTime = false;
-		Node::initRoot(false, x, y, top);
+		//Node::initRoot(false, x, y, top);
 		clearArray(Node::m, Node::n, board);
 		return new Point(x, y);
 	}
 	// opponent first
 	else if (firstTime) {
-		Node::initRoot(true, lastX, lastY, top);
+		//Node::initRoot(true, lastX, lastY, top);
 	}
 	// not the first time
 	else {
-		Node::playerMove(lastX, lastY, Other);
+		//Node::playerMove(lastX, lastY, Other);
 	}
 	firstTime = false;
-	Node::ai(x, y);
+	Node::ai(x, y, board, top);
 	if (x < 0 || x >= Node::m || y < 0 || y >= Node::n || board[x][y] != 0 || top[y] != x) {
 		assert(false); // fucked
 	}

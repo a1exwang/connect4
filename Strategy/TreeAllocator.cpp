@@ -19,7 +19,7 @@ Node* TreeAllocator::allocateNode() {
 		if (currentSize > maxUsed)
 			maxUsed = currentSize;
 #ifdef _DEBUG
-		if (maxUsed % 100000 == 0)
+		if (maxUsed % 100 == 0)
 			cout << "max used " << maxUsed << endl;
 		if (currentSize >= totalSize)
 			cout << "current size: " << currentSize << endl;
@@ -27,8 +27,7 @@ Node* TreeAllocator::allocateNode() {
 		if (currentSize >= totalSize) {
 			assert(false);
 		}
-		
-		
+
 		auto ret = &buffer[currentSize];
 		currentSize++;
 		return ret;
@@ -37,7 +36,7 @@ Node* TreeAllocator::allocateNode() {
 		--reusableNodesSize;
 		auto node = reusableNodes[reusableNodesSize];
 		reusableNodes[reusableNodesSize] = nullptr;
-		expandReusableNode(node);
+		//expandReusableNode(node);
 		return node;
 	}
 }
@@ -53,12 +52,12 @@ void TreeAllocator::recycleNode(const Node* node) {
 }
 
 void TreeAllocator::destroy() {
-	Node::destroy(Node::root);
+	//Node::destroy(Node::root);
 	TreeAllocator::theInstance.reset();
 }
 
 
-void TreeAllocator::expandReusableNode(Node *node) {
+/*void TreeAllocator::expandReusableNode(Node *node) {
 	auto childrenCount = node->childrenCount;//node->getChildrenCount();
 	//cout << "expand node " << node << " count " << childrenCount << endl;
 	for (auto i = 0; i < childrenCount; ++i) {
@@ -67,7 +66,7 @@ void TreeAllocator::expandReusableNode(Node *node) {
 		if (child)
 			reusableNodes[reusableNodesSize++] = const_cast<Node*>(child);
 	}
-}
+}*/
 
 void TreeAllocator::reset() {
 	memset(reusableNodes, 0, sizeof(reusableNodes));
