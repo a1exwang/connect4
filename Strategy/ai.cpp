@@ -130,10 +130,9 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 	totalTimes += childrenCount * MONTE_CARLO_TIMES_BASIC;
 
 	// calculate rates and confidence upper bound
-	double rates[MAX_COLUMNS];
+	/*double rates[MAX_COLUMNS];
 	double confidenceValue[MAX_COLUMNS] = { 0 };
 	for (auto i = 0; i < childrenCount; ++i) {
-		//auto child = Node::root->getChild(i);
 		auto child = children[i];
 		rates[i] = static_cast<double>(score[i]) / times[i];
 		confidenceValue[i] = confidenceUpper(i, score[i], times[i], totalTimes);
@@ -148,19 +147,18 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 		auto random = RouletteRandom(childrenCount, confidenceValue);
 		auto c = random.rand();
 		auto child = children[c];
-		for (int k = 0; k < MONTE_CARLO_TIMES_EXTENDED_ONCE; ++k) {
+		for (auto k = 0; k < MONTE_CARLO_TIMES_EXTENDED_ONCE; ++k) {
 			score[c] += children[c]->monteCarlo();
 		}
 		times[c] += MONTE_CARLO_TIMES_EXTENDED_ONCE;
 		totalTimes += MONTE_CARLO_TIMES_EXTENDED_ONCE;
 		confidenceValue[c] = confidenceUpper(c, score[c], times[c], totalTimes);
-	}
+	}*/
 
 	double max = -1;
-
 	for (auto i = 0; i < childrenCount; ++i) {
 		auto child = children[i];
-		double rate = static_cast<double>(score[i]) / times[i];
+		auto rate = static_cast<double>(score[i]) / times[i];
 		if (rate > max) {
 			max = rate;
 			out_column = childColumns[i];
@@ -171,15 +169,21 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 			<< score[i] << ", times: " << times[i] <<", winrate: " << 2*(rate-0.5) << endl;
 #endif
 	}
+#ifdef _DEBUG
+	cout << "total times: " << totalTimes << endl;
+#endif
 
 	out_line = top[out_column];
 #ifdef _DEBUG
+	cout << "choose (" << out_line << ", " << out_column << ")" << endl;
+#endif
+#ifdef _DEBUG
 	auto t2 = GetTickCount();
-	cout << "time: " << t2 - startTime << "ms" << endl;
+	cout << "time spent: " << t2 - startTime << "ms" << endl;
 #endif
 }
 
-#define SHABBY_RANDOME
+//#define SHABBY_RANDOME
 int Node::randomTop() const {
 	int column = -1;
 	do {
@@ -196,38 +200,68 @@ int Node::randomTop() const {
 	}
 	return column;
 }
-int Node::getNaOfPie(int x, int y) {
-	return y < Node::m - x ? y : Node::m - x;
-}
-int Node::getNaOfPieCount(int l, int c)  {
-	int A = Node::m > Node::n ? Node::n : Node::m;
-	int x1 = l + c + 1;
-	int x2 = Node::m + Node::n - l - c - 1;
-	return x1 < A ? (x1 < x2 ? x1 : x2) : (A < x2 ? A : x2);
-}
-
-int Node::getPieOfNa(int l, int c) {
-	return l < c ? l : c;
-}
-int Node::getPieOfNaCount(int l, int c)  {
-	int A = Node::m > Node::n ? Node::n : Node::m;
-	int x1 = l - c + Node::n - 1 + 1;
-	int x2 = Node::m + Node::n - (l - c + Node::n - 1) - 1;
-	return x1 < A ? (x1 < x2 ? x1 : x2) : (A < x2 ? A : x2);
-}
 
 bool Node::otherWin(const int x, const int y) const {
-	
+
+	int i, j, count;
+	// 横向
+	count = 0;
+	for (i = y; i >= 0; i--)
+		if (!(get(x, i) == Other))
+			break;
+	count += (y - i);
+	for (i = y; i < Node::n; i++)
+		if (!(get(x, i) == Other))
+			break;
+	count += (i - y - 1);
+	if (count >= 4) return true;
+
+	// 纵向
+	count = 0;
+	for (i = x; i >= 0; i--)
+		if (!(get(i, y) == Other))
+			break;
+	count += (x - i);
+	for (i = x; i < Node::m; i++)
+		if (!(get(i, y) == Other))
+			break;
+	count += (i - x - 1);
+	if (count >= 4) return true;
+
+	//左下-右上
+	count = 0;
+	for (i = x, j = y; i < m && j >= 0; i++, j--)
+		if (!(get(i, j) == Other))
+			break;
+	count += (y - j);
+	for (i = x, j = y; i >= 0 && j < n; i--, j++)
+		if (!(get(i, j) == Other))
+			break;
+	count += (j - y - 1);
+	if (count >= 4) return true;
+
+	//左上-右下
+	count = 0;
+	for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
+		if (!(get(i, j) == Other))
+			break;
+	count += (y - j);
+	for (i = x, j = y; i < m && j < n; i++, j++)
+		if (!(get(i, j) == Other))
+			break;
+	count += (j - y - 1);
+	if (count >= 4) return true;
+
+	/*
 	for (auto i = y - 3; i <= y; i++) {
-		if (i >= 0 && i < Node::n && ((oppLines[x] >> i) & 0xF) == 0xF)
-			return true;
+	if (i >= 0 && i < Node::n && ((oppLines[x] >> i) & 0xF) == 0xF)
+	return true;
 	}
 
 	for (auto i = x - 3; i <= x; i++) {
-		if (i >= 0 && i < Node::m && ((oppColumns[y] >> i) & 0xF) == 0xF)
-			return true;
+	if (i >= 0 && i < Node::m && ((oppColumns[y] >> i) & 0xF) == 0xF)
+	return true;
 	}
-
 	auto pie = x + y;
 	auto na = x - y + Node::n - 1;
 	auto naOfPie = getNaOfPie(x, y);
@@ -241,11 +275,64 @@ bool Node::otherWin(const int x, const int y) const {
 	for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
 		if (j >= 0 && j < pieOfNaCount && ((oppNa[na] >> j) & 0xF) == 0xF)
 			return true;
-	}
+	}*/
 	return false;
 }
 
 bool Node::selfWin(const int x, const int y) const {
+
+	int i, j, count;
+
+	// 横向
+	count = 0;
+	for (i = y; i >= 0; i--)
+		if (!(get(x, i) == Self))
+			break;
+	count += (y - i);
+	for (i = y; i < Node::n; i++)
+		if (!(get(x, i) == Self))
+			break;
+	count += (i - y - 1);
+	if (count >= 4) return true;
+
+
+	// 纵向
+	count = 0;
+	for (i = x; i >= 0; i--)
+		if (!(get(i, y) == Self))
+			break;
+	count += (x - i);
+	for (i = x; i < Node::m; i++)
+		if (!(get(i, y) == Self))
+			break;
+	count += (i - x - 1);
+	if (count >= 4) return true;
+
+	//左下-右上
+	count = 0;
+	for (i = x, j = y; i < m && j >= 0; i++, j--)
+		if (!(get(i, j) == Self))
+			break;
+	count += (y - j);
+	for (i = x, j = y; i >= 0 && j < n; i--, j++)
+		if (!(get(i, j) == Self))
+			break;
+	count += (j - y - 1);
+	if (count >= 4) return true;
+
+	//左上-右下
+	count = 0;
+	for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
+		if (!(get(i, j) == Self))
+			break;
+	count += (y - j);
+	for (i = x, j = y; i < m && j < n; i++, j++)
+		if (!(get(i, j) == Self))
+			break;
+	count += (j - y - 1);
+	if (count >= 4) return true;
+
+	/*
 	for (auto i = y - 3; i <= y; i++) {
 		if (i >= 0 && i < Node::n && ((myLines[x] >> i) & 0xF) == 0xF)
 			return true;
@@ -255,6 +342,7 @@ bool Node::selfWin(const int x, const int y) const {
 		if (i >= 0 && i < Node::m && ((myColumns[y] >> i) & 0xF) == 0xF)
 			return true;
 	}
+
 	auto pie = x + y;
 	auto na = x - y + Node::n - 1;
 
@@ -269,7 +357,7 @@ bool Node::selfWin(const int x, const int y) const {
 	for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
 		if (j >= 0 && j < pieOfNaCount && ((myNa[na] >> j) & 0xF) == 0xF)
 			return true;
-	}
+	}*/
 	return false;
 }
 
@@ -303,10 +391,12 @@ Player Node::getWinner() const {
 #include "TreeAllocator.h"
 Node *Node::createNode() {
 	return TreeAllocator::get()->allocateNode()->init();
+	//return new Node();
 }
 
 void Node::destroy(const Node *node) {
 	TreeAllocator::get()->recycleNode(node);
+	//delete node;
 }
 
 Node* Node::init() {
@@ -320,7 +410,8 @@ Node* Node::init() {
 }
 
 Player Node::otherPlayer() const {
-	assert(player == Self || player == Other);
+	if (!(player == Self || player == Other))
+		throw "otherPlayer()";
 	if (player == Self) {
 		return Other;
 	}
@@ -339,7 +430,7 @@ bool Node::becomeChild(int c) {
 	set(l, c, p);
 
 	top[c]--;
-	if (Node::noLine == l && Node::noColumn == col) {
+	if (Node::noLine == l && Node::noColumn == c){
 		top[c]--;
 	}
 
@@ -364,13 +455,15 @@ double Node::monteCarlo() const {
 double Node::monteCarloSimOnceDestroy() {
 
 	auto winner = getWinner();
+	if (!(winner == None || winner == Self || winner == Other || winner == Tie))
+		throw "monteCarloSimOnceDestroy";
 	if (winner == None) {
 		while (true) {
 			auto selectedColumn = randomTop();
 			if (becomeChild(selectedColumn))
 				return monteCarloSimOnceDestroy();
 			else
-				return 0;
+				throw "monteCarloSimOnceDestroy return";
 		}
 
 	}

@@ -45,18 +45,11 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 		}
 	}
 
-	if (lastX == -1) {
-		firstTime = true;
-		//Node::resetAll();
-	}
-
 	// my ai starts here
-	if (firstTime) {
-		Node::m = M;
-		Node::n = N;
-		Node::noLine = noX;
-		Node::noColumn = noY;
-	}
+	Node::m = M;
+	Node::n = N;
+	Node::noLine = noX;
+	Node::noColumn = noY;
 
 	int top[MAX_COLUMNS];
 	for (auto i = 0; i < Node::n; ++i) {
@@ -67,23 +60,14 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 	if (lastX == -1) {
 		y = top[Node::n / 2] >= 0 ? Node::n / 2 : Node::n / 2 + 1;
 		x = top[y];
-		firstTime = false;
-		//Node::initRoot(false, x, y, top);
-		clearArray(Node::m, Node::n, board);
-		return new Point(x, y);
 	}
-	// opponent first
-	else if (firstTime) {
-		//Node::initRoot(true, lastX, lastY, top);
-	}
-	// not the first time
 	else {
-		//Node::playerMove(lastX, lastY, Other);
-	}
-	firstTime = false;
-	Node::ai(x, y, board, top);
-	if (x < 0 || x >= Node::m || y < 0 || y >= Node::n || board[x][y] != 0 || top[y] != x) {
-		assert(false); // fucked
+		Node::ai(x, y, board, top);
+		if (x < 0 || x >= Node::m ||
+			y < 0 || y >= Node::n ||
+			board[x][y] != 0 || top[y] != x) {
+			assert(false); // fucked
+		}
 	}
 	// my ai ends
 

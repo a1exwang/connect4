@@ -12,9 +12,9 @@ enum {
 	Tie = '-',
 	No = 'N'
 };
-constexpr int MONTE_CARLO_TIMES_BASIC = 10;
+constexpr int MONTE_CARLO_TIMES_BASIC = 10000;
 constexpr int MONTE_CARLO_TIMES_EXTENDED_ONCE = 1;
-constexpr int MONTE_CARLO_TIME_MILLIS = 400;
+constexpr int MONTE_CARLO_TIME_MILLIS = 3000;
 
 constexpr double DEFAULT_SCORE = 0.5;
 
@@ -38,25 +38,44 @@ public:
 	Player otherPlayer() const;
 	int getTop(int column) const { return top[column]; }
 
-	static int getNaOfPie(int l, int c);
-	static int getNaOfPieCount(int l, int c);
-	static int getPieOfNa(int l, int c);
-	static int getPieOfNaCount(int, int);
+	static int Node::getNaOfPie(int x, int y) {
+		return y < Node::m - x ? y : Node::m - x;
+	}
+	static int Node::getNaOfPieCount(int l, int c) {
+		int A = Node::m > Node::n ? Node::n : Node::m;
+		int x1 = l + c + 1;
+		int x2 = Node::m + Node::n - l - c - 1;
+		return x1 < A ? (x1 < x2 ? x1 : x2) : (A < x2 ? A : x2);
+	}
+	static int Node::getPieOfNa(int l, int c) {
+		return l < c ? l : c;
+	}
+	static int Node::getPieOfNaCount(int l, int c) {
+		int A = Node::m > Node::n ? Node::n : Node::m;
+		int x1 = l - c + Node::n - 1 + 1;
+		int x2 = Node::m + Node::n - (l - c + Node::n - 1) - 1;
+		return x1 < A ? (x1 < x2 ? x1 : x2) : (A < x2 ? A : x2);
+	}
 	Player get(int line, int column) const {
-		if((myLines[line] >> column) & 1)
+		/*if((myLines[line] >> column) & 1)
 			return Self;
 		else if ((oppLines[line] >> column) & 1)
 			return Other;
 		else 
-			return None;
+			return None;*/
+		return board[line][column];
 		//return board[line][column];
 	}
 	void set(int line, int column, Player p) {
+		if (!(p == Self || p == Other || p == None))
+			throw "set";
 		int pie = line + column;
 		int naOfPie = getNaOfPie(line, column);
 		int na = line - column + Node::n - 1;
 		int pieOfNa = getPieOfNa(line, column);
 		//std::cout << "pie " << pie << ", na" << na << std::endl;
+		board[line][column] = p;
+
 		if (p == Self) {
 			myLines[line]		|= 1 << column;
 			myColumns[column]	|= 1 << line;
@@ -103,7 +122,7 @@ private:
 	bool selfWin(int, int) const;
 	bool becomeChild(int column);
 public:
-//	Player board[MAX_LINES][MAX_COLUMNS];
+	Player board[MAX_LINES][MAX_COLUMNS];
 	uint16_t myLines[MAX_LINES];
 	uint16_t myColumns[MAX_LINES];
 	uint32_t myPie[MAX_LINES + MAX_COLUMNS + 1];

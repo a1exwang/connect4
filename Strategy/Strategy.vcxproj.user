@@ -4,7 +4,7 @@
     <LocalDebuggerCommand>C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Connect4\Debug\Compete.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
-    <LocalDebuggerCommandArguments>"C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\TestCases\60.dll" "C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Connect4\Debug\Strategy.dll" a.txt 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\TestCases\40.dll" "C:\Users\Alex Wang\Desktop\OMG\Download\852009958_4_AI_Project\AI_Project\AI_project_win\Connect4\Debug\Strategy.dll" a.txt 1</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommand>C:\Users\Alex Wang\Desktop\OMG\Download\AI\AI_Project\AI_project_win\Compete\Release\Compete.exe</LocalDebuggerCommand>
