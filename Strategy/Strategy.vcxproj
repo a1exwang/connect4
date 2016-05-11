@@ -188,6 +188,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalOptions>/fp:fast %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -353,21 +354,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ai.cpp" />
     <ClCompile Include="fast_rand.c" />
-    <ClCompile Include="Judge.cpp" />
+    <ClCompile Include="uct_allocator.c" />
     <ClCompile Include="Strategy.cpp" />
-    <ClCompile Include="TreeAllocator.cpp" />
     <ClCompile Include="uct.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ai.h" />
     <ClInclude Include="fast_rand.h" />
-    <ClInclude Include="Judge.h" />
-    <ClInclude Include="PatternMatcher.h" />
+    <ClInclude Include="uct_allocator.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Strategy.h" />
-    <ClInclude Include="TreeAllocator.h" />
+    <ClInclude Include="uct.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

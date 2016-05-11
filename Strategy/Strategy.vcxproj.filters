@@ -15,16 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Judge.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Strategy.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ai.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TreeAllocator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="uct.c">
@@ -33,28 +24,25 @@
     <ClCompile Include="fast_rand.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="uct_allocator.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Judge.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Point.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Strategy.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PatternMatcher.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TreeAllocator.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ai.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="fast_rand.h">
-      <Filter>源文件</Filter>
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="uct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="uct_allocator.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

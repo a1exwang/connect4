@@ -1,4 +1,4 @@
-
+#include "uct.h"
 #include "fast_rand.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,34 +7,7 @@
 #include <stdio.h>
 #include <intrin.h>
 #include <time.h>
-
-#define MAX_BOARD_WIDTH		13
-#define TIME_LIMIT			3000
-#define MAX_SIMULATE_TIMES	(5 * 10000)
-
-#define PLAYER_NONE		0
-#define PLAYER_OTHER	1
-#define PLAYER_SELF		2
-
-#define WIN_SCORE		1
-#define TIE_SCORE		0
-#define LOSE_SCORE		-1
-
-#define UCB_C (2)
-
-typedef struct T_UCTNode {
-	int player;
-	int line, column;
-	int board[MAX_BOARD_WIDTH][MAX_BOARD_WIDTH];
-	struct T_UCTNode *children[MAX_BOARD_WIDTH];
-	struct T_UCTNode *parent;
-
-	int top[MAX_BOARD_WIDTH];
-	int children_count;
-
-	int simulate_times;
-	double score;
-} UCTNode;
+#include "uct_allocator.h"
 
 static int M, N, NO_X, NO_Y;
 
@@ -59,7 +32,7 @@ void print_node(const UCTNode *node) {
 }
 
 UCTNode *node_init(const int **board, int line, int column, int player, const int *top) {
-	UCTNode *node = malloc(sizeof(UCTNode));
+	UCTNode *node = uct_alloc();
 	node->player = player;
 	node->line = line;
 	node->column = column;
@@ -75,6 +48,7 @@ UCTNode *node_init(const int **board, int line, int column, int player, const in
 	node->children_count = 0;
 	node->simulate_times = 0;
 	node->score = 0;
+	node->is_terminate = false;
 	node->parent = NULL;
 
 	for (int i = 0; i < N; ++i) {
@@ -84,7 +58,7 @@ UCTNode *node_init(const int **board, int line, int column, int player, const in
 	return node;
 }
 
-int self_win(const UCTNode *node) {
+inline int self_win(const UCTNode *node) {
 	int x = node->line;
 	int y = node->column;
 	//横向检测
@@ -135,7 +109,7 @@ int self_win(const UCTNode *node) {
 	return false;
 }
 
-int other_win(const UCTNode *node) {
+inline int other_win(const UCTNode *node) {
 	int x = node->line;
 	int y = node->column;
 	//横向检测
@@ -186,7 +160,7 @@ int other_win(const UCTNode *node) {
 	return false;
 }
 
-int is_tie(const UCTNode *node) {
+inline int is_tie(const UCTNode *node) {
 	for (int i = 0;i < N; ++i) {
 		if (node->top[i] > 0)
 			return 0;
@@ -194,23 +168,24 @@ int is_tie(const UCTNode *node) {
 	return 1;
 }
 
-int node_is_terminate(const UCTNode *node) {
-	if (node->player == PLAYER_OTHER) {
+inline int node_is_terminate(const UCTNode *node) {
+	/*if (node->player == PLAYER_OTHER) {
 		return other_win(node) || is_tie(node);
 	}
 	else {
 		return self_win(node) || is_tie(node);
-	}
+	}*/
+	return node->is_terminate;
 }
-UCTNode *node_dup(const UCTNode *node) {
-	UCTNode *ret = malloc(sizeof(UCTNode));
+inline UCTNode *node_dup(const UCTNode *node) {
+	UCTNode *ret = uct_alloc();
 	memcpy(ret, node, sizeof(UCTNode));
 	ret->children_count = 0;
 	ret->score = 0;
 	ret->simulate_times = 0;
 	return ret;
 }
-int other_player(int player) {
+inline int other_player(int player) {
 	if (player == PLAYER_SELF)
 		return PLAYER_OTHER;
 	else if (player == PLAYER_OTHER)
@@ -220,7 +195,7 @@ int other_player(int player) {
 	return 0;
 }
 
-void node_set(UCTNode *node, int column, int player) {
+inline void node_set(UCTNode *node, int column, int player) {
 	if(node->top[column] <= 0) {
 		__debugbreak();
 	}
@@ -242,8 +217,10 @@ UCTNode *expand(UCTNode *node) {
 	// 对于column i来说, 如果new_children[i] == 1, 则column i已经搜索过
 	int new_chilren[MAX_BOARD_WIDTH] = { 0 };
 	for (int i = 0; i < node->children_count; ++i) {
+#ifdef _DEBUG
 		if (new_chilren[node->children[i]->column] == 1)
 			__debugbreak();
+#endif
 		new_chilren[node->children[i]->column] = 1;
 	}
 
@@ -269,29 +246,31 @@ UCTNode *expand(UCTNode *node) {
 	return child;
 }
 
-UCTNode *uct_best_child(const UCTNode *node) {
+inline UCTNode *uct_best_child(const UCTNode *node) {
 	double max = -1e100;
 	int max_i = -1;
 
 	//return node->children[fast_rand(node->children_count)];
 	for (int i = 0; i < node->children_count; ++i) {
-		double value = node->children[i]->score / node->children[i]->simulate_times;
-		double y = UCB_C * sqrt(2 * log(node->simulate_times) / node->children[i]->simulate_times);
+		double value = (node->children[i]->score + UCB_C * sqrt(log(node->simulate_times))) / 
+			node->children[i]->simulate_times;
 		//printf("rate: %f, y: %f\n", value, y);
-		value += y;
+		//value += y;
 
 		if (value > max) {
 			max = value;
 			max_i = i;
 		}
 	}
-	if (max_i < 0)
-		__debugbreak();
+#ifdef _DEBUG
+	//if (max_i < 0)
+	//	__debugbreak();
+#endif
 
 	return node->children[max_i];
 }
 // 用ucb算法选择一个孩子节点
-UCTNode *best_child(const UCTNode *node) {
+inline UCTNode *best_child(const UCTNode *node) {
 	double max = -1e100;
 	int max_i = -1;
 	for (int i = 0; i < node->children_count; ++i) {
@@ -329,7 +308,7 @@ UCTNode *uct_tree_expand(UCTNode *node) {
 }
 
 // 更新该节点的所有祖先节点的score和times
-void update_score(UCTNode *node, double score) {
+inline void update_score(UCTNode *node, double score) {
 	UCTNode *current = node;
 	while (current->parent) {
 		current->parent->simulate_times++;
@@ -357,14 +336,17 @@ double monte_carlo_simulate_once(UCTNode *node) {
 	node->simulate_times++;
 
 	if (node->player == PLAYER_SELF && self_win(node)) {
+		node->is_terminate = true;
 		node->score += WIN_SCORE;
 		return WIN_SCORE;
 	}
 	else if (node->player == PLAYER_OTHER && other_win(node)) {
+		node->is_terminate = true;
 		node->score += WIN_SCORE;
 		return WIN_SCORE;
 	}
 	else if (is_tie(node)) {
+		node->is_terminate = true;
 		node->score += TIE_SCORE;
 		return TIE_SCORE;
 	}
@@ -379,7 +361,7 @@ double monte_carlo_simulate_once(UCTNode *node) {
 	// set node
 	// recur
 	double score = -monte_carlo_simulate_once(child);
-	free(child);
+	uct_recycle(child);
 
 	// update score and times
 	node->score += score;
@@ -391,13 +373,10 @@ void node_destroy(UCTNode *node) {
 	for (int i = 0; i < node->children_count; ++i) {
 		node_destroy(node->children[i]);
 	}
-	free(node);
+	uct_recycle(node);
 }
 
-char output_buf[300 * 1024];
-
 int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int last_y, const int *top) {
-	//setvbuf(stdout, output_buf, _IOFBF, sizeof(output_buf));
 	srand((unsigned)time(0));
 	M = m;
 	N = n;
@@ -413,11 +392,11 @@ int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int la
 	int j = 0;
 	double total_score = 0;
 
-#ifdef _DEBUG
-	for (int i = 0; i < MAX_SIMULATE_TIMES; ++i) {
-#else
-	while (GetTickCount() - start_time < TIME_LIMIT) {
-#endif
+//#ifdef _DEBUG
+//	for (int i = 0; i < MAX_SIMULATE_TIMES; ++i) {
+//#else
+	while (GetTickCount() - start_time < TIME_LIMIT && j < MAX_SIMULATE_TIMES) {
+//#endif
 		// node = tree expand node
 		UCTNode *node = uct_tree_expand(root);
 		
@@ -425,8 +404,6 @@ int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int la
 		double score = monte_carlo_simulate_once(node);
 		update_score(node, score);
 		j++;
-		//printf("score: %f\n", score);
-		//print_node(node);
 	}
 
 	const UCTNode *child = best_child(root);
@@ -435,7 +412,8 @@ int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int la
 	printf("select %d, rate: %f\n", child->column, child->score / child->simulate_times);
 #endif
 
-	node_destroy(root);
+	//node_destroy(root);
+	uct_recycle_all();
 
 	printf("sim times: %d, time elapsed %d\n", j, GetTickCount() - start_time);
 	return ret;

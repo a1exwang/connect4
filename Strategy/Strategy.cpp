@@ -1,10 +1,11 @@
 #include <iostream>
 #include "Point.h"
 #include "Strategy.h"
-#include "ai.h"
+#include "uct.h"
 #include <memory>
 #include <cassert>
 #include "windows.h"
+#include "uct_allocator.h"
 
 using namespace std;
 
@@ -29,8 +30,6 @@ using namespace std;
 	output:
 		你的落子点Point
 */
-
-extern "C" int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int last_y, const int *top);
 
 static bool firstTime = true;
 extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const int* oldTop, const int* _board, 
@@ -87,7 +86,7 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 	/*
 		不要更改这段代码
 	*/
-	clearArray(Node::m, Node::n, board);
+	clearArray(M, N, board);
 	return new Point(x, y);
 }
 
@@ -111,16 +110,17 @@ void clearArray(int M, int N, int** board){
 	delete[] board;
 }
 
-#include "TreeAllocator.h"
-
 extern "C"  __declspec(dllexport) BOOL WINAPI DllMain(
 	_In_ HINSTANCE hinstDLL,
 	_In_ DWORD     fdwReason,
 	_In_ LPVOID    lpvReserved
 ) {
 	switch(fdwReason) {
+	case DLL_PROCESS_ATTACH:
+		uct_allocator_init();
+		break;
 	case DLL_PROCESS_DETACH:
-		TreeAllocator::destroy();
+		uct_allocator_destroy();
 		break;
 	default:
 		break;
