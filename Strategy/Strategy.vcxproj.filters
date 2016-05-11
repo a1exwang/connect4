@@ -27,6 +27,12 @@
     <ClCompile Include="TreeAllocator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="uct.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fast_rand.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Judge.h">
@@ -46,6 +52,9 @@
     </ClInclude>
     <ClInclude Include="ai.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fast_rand.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

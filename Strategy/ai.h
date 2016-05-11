@@ -5,6 +5,9 @@
 typedef int** Matrix;
 
 typedef char Player;
+
+
+
 enum {
 	None = '_',
 	Other = 'X',
@@ -12,7 +15,9 @@ enum {
 	Tie = '-',
 	No = 'N'
 };
-constexpr int MONTE_CARLO_TIMES_BASIC = 10000;
+#define TRUE_RANDOM
+#define SHABBY_RANDOM
+constexpr int MONTE_CARLO_TIMES_BASIC = 10;
 constexpr int MONTE_CARLO_TIMES_EXTENDED_ONCE = 1;
 constexpr int MONTE_CARLO_TIME_MILLIS = 3000;
 
@@ -57,13 +62,12 @@ public:
 		return x1 < A ? (x1 < x2 ? x1 : x2) : (A < x2 ? A : x2);
 	}
 	Player get(int line, int column) const {
-		/*if((myLines[line] >> column) & 1)
+		if((myLines[line] >> column) & 1)
 			return Self;
 		else if ((oppLines[line] >> column) & 1)
 			return Other;
 		else 
-			return None;*/
-		return board[line][column];
+			return None;
 		//return board[line][column];
 	}
 	void set(int line, int column, Player p) {
@@ -74,7 +78,7 @@ public:
 		int na = line - column + Node::n - 1;
 		int pieOfNa = getPieOfNa(line, column);
 		//std::cout << "pie " << pie << ", na" << na << std::endl;
-		board[line][column] = p;
+		//board[line][column] = p;
 
 		if (p == Self) {
 			myLines[line]		|= 1 << column;
@@ -109,20 +113,235 @@ public:
 			oppPie[pie]			&= ~(1 << naOfPie);
 			oppNa[na]			&= ~(1 << pieOfNa);
 		}
-		//board[line][column] = p;
 	}
 	double monteCarlo() const;
+	static uint32_t shabbyRandom() {
+		uint32_t t;
+		x ^= x << 16;
+		x ^= x >> 5;
+		x ^= x << 1;
+
+		t = x;
+		x = y;
+		y = z;
+		z = t ^ x ^ y;
+
+		return z;
+	}
 private:
 	Node *init();
 	friend class TreeAllocator;
 	double monteCarloSimOnceDestroy();
-	int randomTop() const;
-	Player getWinner() const;
-	bool otherWin(int, int) const;
-	bool selfWin(int, int) const;
+
+	static uint32_t x, y, z;
+
+
+
+	int randomTop() const {
+		int column = -1;
+		do {
+#if defined(TRUE_RANDOM) && !defined(SHABBY_RANDOM)
+			column = rand() % Node::n;
+#elif defined SHABBY_RANDOM
+			column = shabbyRandom() % Node::n;
+#else
+			column++;
+#endif
+		} while (top[column] < 0);
+		if (column < 0 || column >= Node::n) {
+			throw "column out of bound";
+		}
+		return column;
+	}
+	bool otherWin(const int x, const int y) const {
+
+		/*int i, j, count;
+		// 横向
+		count = 0;
+		for (i = y; i >= 0; i--)
+		if (!(get(x, i) == Other))
+		break;
+		count += (y - i);
+		for (i = y; i < Node::n; i++)
+		if (!(get(x, i) == Other))
+		break;
+		count += (i - y - 1);
+		if (count >= 4) return true;
+
+		// 纵向
+		count = 0;
+		for (i = x; i >= 0; i--)
+		if (!(get(i, y) == Other))
+		break;
+		count += (x - i);
+		for (i = x; i < Node::m; i++)
+		if (!(get(i, y) == Other))
+		break;
+		count += (i - x - 1);
+		if (count >= 4) return true;
+
+		//左下-右上
+		count = 0;
+		for (i = x, j = y; i < m && j >= 0; i++, j--)
+		if (!(get(i, j) == Other))
+		break;
+		count += (y - j);
+		for (i = x, j = y; i >= 0 && j < n; i--, j++)
+		if (!(get(i, j) == Other))
+		break;
+		count += (j - y - 1);
+		if (count >= 4) return true;
+
+		//左上-右下
+		count = 0;
+		for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
+		if (!(get(i, j) == Other))
+		break;
+		count += (y - j);
+		for (i = x, j = y; i < m && j < n; i++, j++)
+		if (!(get(i, j) == Other))
+		break;
+		count += (j - y - 1);
+		if (count >= 4) return true;*/
+
+		for (auto i = y - 3; i <= y; i++) {
+			if (i >= 0 && i < Node::n && ((oppLines[x] >> i) & 0xF) == 0xF)
+				return true;
+		}
+
+		for (auto i = x - 3; i <= x; i++) {
+			if (i >= 0 && i < Node::m && ((oppColumns[y] >> i) & 0xF) == 0xF)
+				return true;
+		}
+		auto pie = x + y;
+		auto na = x - y + Node::n - 1;
+		auto naOfPie = getNaOfPie(x, y);
+		auto naOfPieCount = getNaOfPieCount(x, y);
+		for (auto j = naOfPie - 3; j <= naOfPie; j++) {
+			if (j >= 0 && j < naOfPieCount && ((oppPie[pie] >> j) & 0xF) == 0xF)
+				return true;
+		}
+		auto pieOfNa = getPieOfNa(x, y);
+		auto pieOfNaCount = getPieOfNaCount(x, y);
+		for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
+			if (j >= 0 && j < pieOfNaCount && ((oppNa[na] >> j) & 0xF) == 0xF)
+				return true;
+		}
+		return false;
+	}
+
+	bool selfWin(const int x, const int y) const {
+		/*
+		int i, j, count;
+
+		// 横向
+		count = 0;
+		for (i = y; i >= 0; i--)
+		if (!(get(x, i) == Self))
+		break;
+		count += (y - i);
+		for (i = y; i < Node::n; i++)
+		if (!(get(x, i) == Self))
+		break;
+		count += (i - y - 1);
+		if (count >= 4) return true;
+
+
+		// 纵向
+		count = 0;
+		for (i = x; i >= 0; i--)
+		if (!(get(i, y) == Self))
+		break;
+		count += (x - i);
+		for (i = x; i < Node::m; i++)
+		if (!(get(i, y) == Self))
+		break;
+		count += (i - x - 1);
+		if (count >= 4) return true;
+
+		//左下-右上
+		count = 0;
+		for (i = x, j = y; i < m && j >= 0; i++, j--)
+		if (!(get(i, j) == Self))
+		break;
+		count += (y - j);
+		for (i = x, j = y; i >= 0 && j < n; i--, j++)
+		if (!(get(i, j) == Self))
+		break;
+		count += (j - y - 1);
+		if (count >= 4) return true;
+
+		//左上-右下
+		count = 0;
+		for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
+		if (!(get(i, j) == Self))
+		break;
+		count += (y - j);
+		for (i = x, j = y; i < m && j < n; i++, j++)
+		if (!(get(i, j) == Self))
+		break;
+		count += (j - y - 1);
+		if (count >= 4) return true;*/
+
+
+		for (auto i = y - 3; i <= y; i++) {
+			if (i >= 0 && i < Node::n && ((myLines[x] >> i) & 0xF) == 0xF)
+				return true;
+		}
+
+		for (auto i = x - 3; i <= x; i++) {
+			if (i >= 0 && i < Node::m && ((myColumns[y] >> i) & 0xF) == 0xF)
+				return true;
+		}
+
+		auto pie = x + y;
+		auto na = x - y + Node::n - 1;
+
+		auto naOfPie = getNaOfPie(x, y);
+		auto naOfPieCount = getNaOfPieCount(x, y);
+		for (auto j = naOfPie - 3; j <= naOfPie; j++) {
+			if (j >= 0 && j < naOfPieCount && ((myPie[pie] >> j) & 0xF) == 0xF)
+				return true;
+		}
+		auto pieOfNa = getPieOfNa(x, y);
+		auto pieOfNaCount = getPieOfNaCount(x, y);
+		for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
+			if (j >= 0 && j < pieOfNaCount && ((myNa[na] >> j) & 0xF) == 0xF)
+				return true;
+		}
+		return false;
+	}
+
+	Player getWinner() const {
+
+		// is tie
+		bool tie = true;
+		for (int i = 0; i < Node::n; i++)
+		{
+			if (top[i] >= 0)
+			{
+				tie = false;
+				break;
+			}
+		}
+
+		if (tie)
+			return Tie;
+
+		if (player == Self) {
+			if (selfWin(line, col))
+				return Self;
+		}
+		else {
+			if (otherWin(line, col))
+				return Other;
+		}
+		return None;
+	}
+
 	bool becomeChild(int column);
 public:
-	Player board[MAX_LINES][MAX_COLUMNS];
+	//Player board[MAX_LINES][MAX_COLUMNS];
 	uint16_t myLines[MAX_LINES];
 	uint16_t myColumns[MAX_LINES];
 	uint32_t myPie[MAX_LINES + MAX_COLUMNS + 1];

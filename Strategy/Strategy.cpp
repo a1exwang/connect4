@@ -30,6 +30,8 @@ using namespace std;
 		ÄãµÄÂä×ÓµãPoint
 */
 
+extern "C" int uct_search(int **board, int m, int n, int no_x, int no_y, int last_x, int last_y, const int *top);
+
 static bool firstTime = true;
 extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const int* oldTop, const int* _board, 
 	const int lastX, const int lastY, const int noX, const int noY){
@@ -45,8 +47,19 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 		}
 	}
 
+	// new ai
+	if (lastX == -1) {
+		y = oldTop[N / 2] > 0 ? N / 2 : N / 2 + 1;
+		x = M - 1;
+	}
+	else {
+		auto column = uct_search(board, M, N, noX, noY, lastX, lastY, oldTop);
+		x = oldTop[column] - 1;
+		y = column;
+	}
+
 	// my ai starts here
-	Node::m = M;
+	/*Node::m = M;
 	Node::n = N;
 	Node::noLine = noX;
 	Node::noColumn = noY;
@@ -68,7 +81,7 @@ extern "C" __declspec(dllexport) Point* getPoint(const int M, const int N, const
 			board[x][y] != 0 || top[y] != x) {
 			assert(false); // fucked
 		}
-	}
+	}*/
 	// my ai ends
 
 	/*

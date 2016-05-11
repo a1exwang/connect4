@@ -14,23 +14,12 @@ int Node::noLine = -1;
 int Node::noColumn = -1;
 
 
-static uint32_t x = 123456789, y = 362436069, z = 521288629;
-
-uint32_t shabbyRandom() {
-	uint32_t t;
-	x ^= x << 16;
-	x ^= x >> 5;
-	x ^= x << 1;
-
-	t = x;
-	x = y;
-	y = z;
-	z = t ^ x ^ y;
-
-	return z;
-}
+uint32_t Node::x = 123456789, Node::y = 362436069, Node::z = 521288629;
 
 char BOARD_TRANSLATION_TABLE[] = "_XO-N";
+
+#include <random>
+
 
 constexpr uint32_t MAX_RANDOM_INT = (2 << 30);
 class RouletteRandom {
@@ -54,7 +43,16 @@ public:
 	}
 
 	int rand() const {
-		uint32_t r = shabbyRandom() % MAX_RANDOM_INT;
+#ifdef SHABBY_RANDOM
+		uint32_t r = Node::shabbyRandom() % MAX_RANDOM_INT;
+#else
+		//uint32_t r = ::rand() % MAX_RANDOM_INT;
+		std::random_device rd;     // only used once to initialise (seed) engine
+		std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+		std::uniform_int_distribution<uint32_t> uni(0, MAX_RANDOM_INT); // guaranteed unbiased
+		uint32_t r = uni(rng);
+#endif
+		
 		for (int i = 1; i <= count; ++i) {
 			if (begins[i] > r) {
 				return i-1;
@@ -83,6 +81,9 @@ double confidenceUpper(int child, double score, int times, int totalTimes) {
 
 void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 	auto startTime = GetTickCount();
+#ifndef SHABBY_RANDOM
+	srand(time(0));
+#endif
 
 #ifdef _DEBUG
 	cout << "sizeof(Node) " << sizeof(Node) << endl;
@@ -130,7 +131,7 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 	totalTimes += childrenCount * MONTE_CARLO_TIMES_BASIC;
 
 	// calculate rates and confidence upper bound
-	/*double rates[MAX_COLUMNS];
+	double rates[MAX_COLUMNS];
 	double confidenceValue[MAX_COLUMNS] = { 0 };
 	for (auto i = 0; i < childrenCount; ++i) {
 		auto child = children[i];
@@ -153,7 +154,7 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 		times[c] += MONTE_CARLO_TIMES_EXTENDED_ONCE;
 		totalTimes += MONTE_CARLO_TIMES_EXTENDED_ONCE;
 		confidenceValue[c] = confidenceUpper(c, score[c], times[c], totalTimes);
-	}*/
+	}
 
 	double max = -1;
 	for (auto i = 0; i < childrenCount; ++i) {
@@ -169,9 +170,7 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 			<< score[i] << ", times: " << times[i] <<", winrate: " << 2*(rate-0.5) << endl;
 #endif
 	}
-#ifdef _DEBUG
 	cout << "total times: " << totalTimes << endl;
-#endif
 
 	out_line = top[out_column];
 #ifdef _DEBUG
@@ -183,210 +182,8 @@ void Node::ai(int &out_line, int &out_column, int** board, int* top) {
 #endif
 }
 
-//#define SHABBY_RANDOME
-int Node::randomTop() const {
-	int column = -1;
-	do {
-#if defined(TRUE_RANDOMN) && !defined(SHABBY_RANDOME)
-		column = rand() % Node::n;
-#elif defined SHABBY_RANDOME
-		column = shabbyRandom() % Node::n;
-#else
-		column++;
-#endif
-	} while (top[column] < 0);
-	if (column < 0 || column >= Node::n) {
-		throw "column out of bound";
-	}
-	return column;
-}
-
-bool Node::otherWin(const int x, const int y) const {
-
-	int i, j, count;
-	// 横向
-	count = 0;
-	for (i = y; i >= 0; i--)
-		if (!(get(x, i) == Other))
-			break;
-	count += (y - i);
-	for (i = y; i < Node::n; i++)
-		if (!(get(x, i) == Other))
-			break;
-	count += (i - y - 1);
-	if (count >= 4) return true;
-
-	// 纵向
-	count = 0;
-	for (i = x; i >= 0; i--)
-		if (!(get(i, y) == Other))
-			break;
-	count += (x - i);
-	for (i = x; i < Node::m; i++)
-		if (!(get(i, y) == Other))
-			break;
-	count += (i - x - 1);
-	if (count >= 4) return true;
-
-	//左下-右上
-	count = 0;
-	for (i = x, j = y; i < m && j >= 0; i++, j--)
-		if (!(get(i, j) == Other))
-			break;
-	count += (y - j);
-	for (i = x, j = y; i >= 0 && j < n; i--, j++)
-		if (!(get(i, j) == Other))
-			break;
-	count += (j - y - 1);
-	if (count >= 4) return true;
-
-	//左上-右下
-	count = 0;
-	for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
-		if (!(get(i, j) == Other))
-			break;
-	count += (y - j);
-	for (i = x, j = y; i < m && j < n; i++, j++)
-		if (!(get(i, j) == Other))
-			break;
-	count += (j - y - 1);
-	if (count >= 4) return true;
-
-	/*
-	for (auto i = y - 3; i <= y; i++) {
-	if (i >= 0 && i < Node::n && ((oppLines[x] >> i) & 0xF) == 0xF)
-	return true;
-	}
-
-	for (auto i = x - 3; i <= x; i++) {
-	if (i >= 0 && i < Node::m && ((oppColumns[y] >> i) & 0xF) == 0xF)
-	return true;
-	}
-	auto pie = x + y;
-	auto na = x - y + Node::n - 1;
-	auto naOfPie = getNaOfPie(x, y);
-	auto naOfPieCount = getNaOfPieCount(x, y);
-	for (auto j = naOfPie - 3; j <= naOfPie; j++) {
-		if (j >= 0 && j < naOfPieCount && ((oppPie[pie] >> j) & 0xF) == 0xF)
-			return true;
-	}
-	auto pieOfNa = getPieOfNa(x, y);
-	auto pieOfNaCount = getPieOfNaCount(x, y);
-	for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
-		if (j >= 0 && j < pieOfNaCount && ((oppNa[na] >> j) & 0xF) == 0xF)
-			return true;
-	}*/
-	return false;
-}
-
-bool Node::selfWin(const int x, const int y) const {
-
-	int i, j, count;
-
-	// 横向
-	count = 0;
-	for (i = y; i >= 0; i--)
-		if (!(get(x, i) == Self))
-			break;
-	count += (y - i);
-	for (i = y; i < Node::n; i++)
-		if (!(get(x, i) == Self))
-			break;
-	count += (i - y - 1);
-	if (count >= 4) return true;
 
 
-	// 纵向
-	count = 0;
-	for (i = x; i >= 0; i--)
-		if (!(get(i, y) == Self))
-			break;
-	count += (x - i);
-	for (i = x; i < Node::m; i++)
-		if (!(get(i, y) == Self))
-			break;
-	count += (i - x - 1);
-	if (count >= 4) return true;
-
-	//左下-右上
-	count = 0;
-	for (i = x, j = y; i < m && j >= 0; i++, j--)
-		if (!(get(i, j) == Self))
-			break;
-	count += (y - j);
-	for (i = x, j = y; i >= 0 && j < n; i--, j++)
-		if (!(get(i, j) == Self))
-			break;
-	count += (j - y - 1);
-	if (count >= 4) return true;
-
-	//左上-右下
-	count = 0;
-	for (i = x, j = y; i >= 0 && j >= 0; i--, j--)
-		if (!(get(i, j) == Self))
-			break;
-	count += (y - j);
-	for (i = x, j = y; i < m && j < n; i++, j++)
-		if (!(get(i, j) == Self))
-			break;
-	count += (j - y - 1);
-	if (count >= 4) return true;
-
-	/*
-	for (auto i = y - 3; i <= y; i++) {
-		if (i >= 0 && i < Node::n && ((myLines[x] >> i) & 0xF) == 0xF)
-			return true;
-	}
-
-	for (auto i = x - 3; i <= x; i++) {
-		if (i >= 0 && i < Node::m && ((myColumns[y] >> i) & 0xF) == 0xF)
-			return true;
-	}
-
-	auto pie = x + y;
-	auto na = x - y + Node::n - 1;
-
-	auto naOfPie = getNaOfPie(x, y);
-	auto naOfPieCount = getNaOfPieCount(x, y);
-	for (auto j = naOfPie - 3; j <= naOfPie; j++) {
-		if (j >= 0 && j < naOfPieCount && ((myPie[pie] >> j) & 0xF) == 0xF)
-			return true;
-	}
-	auto pieOfNa = getPieOfNa(x, y);
-	auto pieOfNaCount = getPieOfNaCount(x, y);
-	for (auto j = pieOfNa - 3; j <= pieOfNa; j++) {
-		if (j >= 0 && j < pieOfNaCount && ((myNa[na] >> j) & 0xF) == 0xF)
-			return true;
-	}*/
-	return false;
-}
-
-Player Node::getWinner() const {
-
-	// is tie
-	bool tie = true;
-	for (int i = 0; i < Node::n; i++)
-	{
-		if (top[i] >= 0)
-		{
-			tie = false;
-			break;
-		}
-	}
-
-	if (tie)
-		return Tie;
-
-	if (player == Self) {
-		if (selfWin(line, col))
-			return Self;
-	}
-	else {
-		if (otherWin(line, col))
-			return Other;
-	}
-	return None;
-}
 
 #include "TreeAllocator.h"
 Node *Node::createNode() {

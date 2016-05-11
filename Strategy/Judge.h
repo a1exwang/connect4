@@ -12,7 +12,7 @@
 
 #ifndef JUDGE_H_
 #define JUDGE_H_
-
+#include <stdbool.h>
 /*
 	otherWin - 判断用户是否赢
 	machineWin - 判断机器是否赢
